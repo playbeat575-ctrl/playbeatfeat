@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/digital-products", "destination": "/" },
+    { "source": "/storeadmin", "destination": "/" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
