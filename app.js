@@ -405,4 +405,229 @@ function Storefront({ products }) {
       {/* Why PlayBeat */}
       <div className="why-section">
         <div className="why-inner">
-          <div style={{textAlign:'center'}}><div className="section-eyebrow" style={{justifyContent:'center',display:'flex'}}>Why Choose Us</div><h2 className="section-title" style={{textAlign:'center',marginTop:'8px'}}>Built
+          <div style={{textAlign:'center'}}><div className="section-eyebrow" style={{justifyContent:'center',display:'flex'}}>Why Choose Us</div><h2 className="section-title" style={{textAlign:'center',marginTop:'8px'}}>Built for Pakistan Gamers</h2></div>
+          <div className="why-grid">
+            <div className="why-card"><div className="why-icon">⚡</div><div className="why-title">Instant Delivery</div><p className="why-desc">Your keys and codes arrive the moment payment clears — no waiting, no delays.</p></div>
+            <div className="why-card"><div className="why-icon">💳</div><div className="why-title">Pay in PKR</div><p className="why-desc">JazzCash, Bank Alfalah, Meezan Bank &amp; Stripe — no forex headaches.</p></div>
+            <div className="why-card"><div className="why-icon">🛡️</div><div className="why-title">Buyer Protection</div><p className="why-desc">Every purchase is covered. If something's wrong, we make it right — guaranteed.</p></div>
+            <div className="why-card"><div className="why-icon">💬</div><div className="why-title">24/7 Support</div><p className="why-desc">WhatsApp, Telegram, or Email — our team is always on standby for you.</p></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Newsletter */}
+      <div className="newsletter-section">
+        <div className="newsletter-box">
+          <div className="nl-text"><div className="nl-title">Get Exclusive Deals</div><p className="nl-sub">Flash sales, new arrivals, and weekly PKR deals — straight to your inbox.</p></div>
+          <div className="nl-form">
+            <input className="nl-input" type="email" value={nlEmail} onChange={e => setNlEmail(e.target.value)} placeholder="your@email.com"/>
+            <button className="nl-btn" onClick={handleNl}>Subscribe</button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   ADMIN DASHBOARD
+   ═══════════════════════════════════════════════════ */
+function Admin({ products, orders, setProducts }) {
+  const toast = useToast();
+  const [sec, setSec] = useState('overview');
+  const [search, setSearch] = useState('');
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({});
+
+  const totalRev = orders.reduce((s, o) => s + o.amount, 0);
+  const maxRev = Math.max(...REVENUE.map(d => d.v));
+  const topProducts = [...products].sort((a, b) => b.sales - a.sales).slice(0, 5);
+  const topMax = topProducts[0] ? topProducts[0].sales : 1;
+
+  const sf = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const openAdd = () => { setForm({ name:'', cat:'Games', status:'active', price:'', old:'', badge:'hot', emoji:'📦' }); setModal({ type:'add' }); };
+  const openEdit = (p) => { setForm({ name:p.name, cat:p.cat, status:p.status, price:p.price, old:p.old||'', badge:p.badge, emoji:p.emoji }); setModal({ type:'edit', product:p }); };
+  const openDel = (p) => setModal({ type:'delete', product:p });
+  const close = () => setModal(null);
+
+  const save = () => {
+    if (!form.name || !form.name.trim()) { toast('Product name required','error'); return; }
+    const d = { name:form.name.trim(), cat:form.cat, status:form.status, price:parseInt(form.price)||0, old:parseInt(form.old)||0, badge:form.badge, emoji:form.emoji||'📦' };
+    if (modal.type === 'edit') {
+      setProducts(prev => prev.map(x => x.id === modal.product.id ? { ...x, ...d } : x));
+      toast('"' + d.name + '" updated','success');
+    } else {
+      setProducts(prev => [...prev, { id:Math.max(...prev.map(x => x.id), 0) + 1, ...d, grade:'★★★★★ (0)', sales:0 }]);
+      toast('"' + d.name + '" added','success');
+    }
+    close();
+  };
+
+  const del = () => {
+    setProducts(prev => prev.filter(x => x.id !== modal.product.id));
+    toast('Product deleted','success');
+    close();
+  };
+
+  const filtered = products.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase()) ||
+    p.cat.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const SP = ({ s }) => <span className={'status-pill ' + s}>{s.charAt(0).toUpperCase() + s.slice(1)}</span>;
+
+  return (
+    <div className="admin-layout">
+      <aside className="admin-sidebar">
+        <div className="as-label">Overview</div>
+        <button className={'as-item' + (sec === 'overview' ? ' active' : '')} onClick={() => { setSec('overview'); setSearch(''); }}><span>📊</span> Dashboard</button>
+        <div className="as-label">Management</div>
+        <button className={'as-item' + (sec === 'products' ? ' active' : '')} onClick={() => { setSec('products'); setSearch(''); }}><span>📦</span> Products <span className="as-badge">{products.length}</span></button>
+        <button className={'as-item' + (sec === 'orders' ? ' active' : '')} onClick={() => { setSec('orders'); setSearch(''); }}><span>🧾</span> Orders <span className="as-badge">3</span></button>
+        <button className={'as-item' + (sec === 'customers' ? ' active' : '')} onClick={() => setSec('customers')}><span>👥</span> Customers</button>
+        <div className="as-label">System</div>
+        <button className={'as-item' + (sec === 'settings' ? ' active' : '')} onClick={() => setSec('settings')}><span>⚙️</span> Store Settings</button>
+      </aside>
+
+      <div className="admin-main">
+        {/* OVERVIEW */}
+        {sec === 'overview' && <>
+          <div className="am-header"><h2>Dashboard</h2><p>PlayBeat Digital store performance overview</p></div>
+          <div className="stats-row">
+            <div className="stat-card"><div className="sc-icon">💰</div><div className="sc-val">PKR {totalRev.toLocaleString()}</div><div className="sc-label">Total Revenue</div><div className="sc-change up">▲ 14.2% this month</div></div>
+            <div className="stat-card"><div className="sc-icon">🧾</div><div className="sc-val">{orders.length}</div><div className="sc-label">Total Orders</div><div className="sc-change up">▲ 8.7% this month</div></div>
+            <div className="stat-card"><div className="sc-icon">📦</div><div className="sc-val">{products.filter(p => p.status === 'active').length}</div><div className="sc-label">Active Products</div><div className="sc-change up">▲ 5 new this week</div></div>
+            <div className="stat-card"><div className="sc-icon">👥</div><div className="sc-val">1,247</div><div className="sc-label">Customers</div><div className="sc-change down">▼ 1.8% this month</div></div>
+          </div>
+          <div className="chart-area">
+            <div className="chart-card"><h3>Revenue — Last 12 Months (PKR)</h3><div className="chart-bars">{REVENUE.map(d => <div key={d.m} className="cb-wrap"><div className="cb-bar" style={{height: (d.v / maxRev * 100) + '%'}}></div><span className="cb-label">{d.m}</span></div>)}</div></div>
+            <div className="chart-card"><h3>Top Products</h3><ul className="top-list">{topProducts.map((p, i) => <li key={p.id}><span className={'tl-rank' + (i < 3 ? ' top' : '')}>{i + 1}</span><span className="tl-name">{p.name}</span><div className="tl-bar"><div className="tl-bar-fill" style={{width: (p.sales / topMax * 100) + '%'}}></div></div><span className="tl-val">{(p.sales / 1000).toFixed(1)}k</span></li>)}</ul></div>
+          </div>
+          <div className="admin-table-wrap">
+            <div className="atw-head"><h3>Recent Orders</h3><button className="btn-modal ghost" onClick={() => setSec('orders')} style={{fontSize:'9px'}}>View All →</button></div>
+            <div style={{overflowX:'auto'}}><table><thead><tr><th>Order</th><th>Customer</th><th>Product</th><th>Amount</th><th>Payment</th><th>Status</th></tr></thead>
+              <tbody>{orders.slice(0, 5).map(o => <tr key={o.id}><td style={{fontWeight:600,fontFamily:"'Share Tech Mono',monospace",fontSize:'12px'}}>{o.id}</td><td>{o.customer}</td><td>{o.product}</td><td style={{fontWeight:600,color:'var(--yellow-300)'}}>PKR {o.amount.toLocaleString()}</td><td>{o.payment}</td><td><SP s={o.status}/></td></tr>)}</tbody>
+            </table></div>
+          </div>
+        </>}
+
+        {/* PRODUCTS */}
+        {sec === 'products' && <>
+          <div className="am-header" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:'12px'}}>
+            <div><h2>Products</h2><p>Add, edit, and manage your product catalog</p></div>
+            <button className="btn-modal primary" onClick={openAdd}>+ Add Product</button>
+          </div>
+          <div className="admin-table-wrap">
+            <div className="atw-head"><h3>All Products</h3><input className="atw-search" placeholder="Search products…" value={search} onChange={e => setSearch(e.target.value)}/></div>
+            <div style={{overflowX:'auto'}}><table><thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Sales</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>{filtered.map(p => <tr key={p.id}>
+                <td><div style={{display:'flex',alignItems:'center',gap:'10px'}}><span style={{fontSize:'24px'}}>{p.emoji}</span><div style={{fontWeight:600,color:'var(--silver-100)'}}>{p.name}</div></div></td>
+                <td>{p.cat}</td>
+                <td style={{fontWeight:600,color:'var(--yellow-300)',fontFamily:"'Share Tech Mono',monospace"}}>PKR {p.price.toLocaleString()}</td>
+                <td style={{fontFamily:"'Share Tech Mono',monospace"}}>{p.sales.toLocaleString()}</td>
+                <td><SP s={p.status}/></td>
+                <td><div className="tbl-actions"><button onClick={() => openEdit(p)}>✏️</button><button className="del" onClick={() => openDel(p)}>🗑️</button></div></td>
+              </tr>)}</tbody>
+            </table></div>
+          </div>
+        </>}
+
+        {/* ORDERS */}
+        {sec === 'orders' && <>
+          <div className="am-header"><h2>Orders</h2><p>Track and manage all customer orders</p></div>
+          <div className="admin-table-wrap"><div className="atw-head"><h3>All Orders</h3><input className="atw-search" placeholder="Search orders…"/></div>
+            <div style={{overflowX:'auto'}}><table><thead><tr><th>Order ID</th><th>Customer</th><th>Email</th><th>Product</th><th>Amount</th><th>Payment</th><th>Date</th><th>Status</th></tr></thead>
+              <tbody>{orders.map(o => <tr key={o.id}><td style={{fontWeight:600,fontFamily:"'Share Tech Mono',monospace",fontSize:'12px'}}>{o.id}</td><td>{o.customer}</td><td style={{color:'var(--text-muted)',fontSize:'12px'}}>{o.email}</td><td>{o.product}</td><td style={{fontWeight:600,color:'var(--yellow-300)'}}>PKR {o.amount.toLocaleString()}</td><td>{o.payment}</td><td style={{color:'var(--text-muted)',fontSize:'12px'}}>{o.date}</td><td><SP s={o.status}/></td></tr>)}</tbody>
+            </table></div>
+          </div>
+        </>}
+
+        {/* CUSTOMERS */}
+        {sec === 'customers' && <>
+          <div className="am-header"><h2>Customers</h2><p>Your customer base and purchase history</p></div>
+          <div className="admin-table-wrap"><div className="atw-head"><h3>All Customers</h3><input className="atw-search" placeholder="Search customers…"/></div>
+            <div style={{overflowX:'auto'}}><table><thead><tr><th>Customer</th><th>Email</th><th>Orders</th><th>Total Spent</th><th>Joined</th></tr></thead>
+              <tbody>{CUSTOMERS.map((c, i) => <tr key={i}><td style={{fontWeight:600,color:'var(--silver-100)'}}>{c.name}</td><td style={{color:'var(--text-muted)',fontSize:'12px'}}>{c.email}</td><td>{c.orders}</td><td style={{fontWeight:600,color:'var(--yellow-300)',fontFamily:"'Share Tech Mono',monospace"}}>PKR {c.spent.toLocaleString()}</td><td style={{color:'var(--text-muted)',fontSize:'12px'}}>{c.joined}</td></tr>)}</tbody>
+            </table></div>
+          </div>
+        </>}
+
+        {/* SETTINGS */}
+        {sec === 'settings' && <>
+          <div className="am-header"><h2>Store Settings</h2><p>Configure your PlayBeat Digital store</p></div>
+          <div className="settings-card">
+            <div className="fg"><label>Store Name</label><input type="text" defaultValue="PlayBeat Digital"/></div>
+            <div className="fg"><label>Store Description</label><textarea defaultValue="Pakistan's #1 Digital Marketplace — Games, AI Tools, Software, Gift Cards & Subscriptions at PKR prices."></textarea></div>
+            <div className="fg-row">
+              <div className="fg"><label>Default Currency</label><select defaultValue="PKR"><option>PKR</option><option>USD</option></select></div>
+              <div className="fg"><label>Timezone</label><select defaultValue="Asia/Karachi"><option>Asia/Karachi (UTC+5)</option><option>UTC</option></select></div>
+            </div>
+            <div className="fg"><label>WhatsApp Support Number</label><input type="text" defaultValue="+92 331 8333368"/></div>
+            <div className="fg"><label>Support Email</label><input type="email" defaultValue="support@playbeat.gg"/></div>
+            <div style={{marginTop:'20px',display:'flex',gap:'10px'}}>
+              <button className="btn-modal primary" onClick={() => toast('Settings saved','success')}>Save Changes</button>
+              <button className="btn-modal ghost" onClick={() => toast('Settings reset to defaults','info')}>Reset Defaults</button>
+            </div>
+          </div>
+        </>}
+      </div>
+
+      {/* Add/Edit Modal */}
+      <Modal open={modal && (modal.type === 'add' || modal.type === 'edit')} onClose={close}>
+        <div className="modal-head"><h3>{modal && modal.type === 'edit' ? 'Edit Product' : 'Add Product'}</h3><button className="btn-modal ghost" onClick={close} style={{padding:'6px 10px'}}>✕</button></div>
+        <div className="modal-body">
+          <div className="fg"><label>Product Name</label><input type="text" value={form.name || ''} onChange={e => sf('name', e.target.value)}/></div>
+          <div className="fg-row">
+            <div className="fg"><label>Category</label><select value={form.cat || 'Games'} onChange={e => sf('cat', e.target.value)}>{['Games','Gift Cards','Software','AI Tools','Subscriptions','Top Up','Game Items','Accounts'].map(c => <option key={c}>{c}</option>)}</select></div>
+            <div className="fg"><label>Status</label><select value={form.status || 'active'} onChange={e => sf('status', e.target.value)}><option value="active">Active</option><option value="pending">Pending</option><option value="inactive">Inactive</option></select></div>
+          </div>
+          <div className="fg-row">
+            <div className="fg"><label>Price (PKR)</label><input type="number" value={form.price || ''} onChange={e => sf('price', e.target.value)} min="0"/></div>
+            <div className="fg"><label>Original Price (PKR)</label><input type="number" value={form.old || ''} onChange={e => sf('old', e.target.value)} min="0"/></div>
+          </div>
+          <div className="fg-row">
+            <div className="fg"><label>Badge</label><select value={form.badge || 'hot'} onChange={e => sf('badge', e.target.value)}>{['hot','new','popular','ai','sale'].map(b => <option key={b} value={b}>{b.toUpperCase()}</option>)}</select></div>
+            <div className="fg"><label>Emoji Icon</label><input type="text" value={form.emoji || '📦'} onChange={e => sf('emoji', e.target.value)} maxLength="4"/></div>
+          </div>
+        </div>
+        <div className="modal-foot"><button className="btn-modal ghost" onClick={close}>Cancel</button><button className="btn-modal primary" onClick={save}>{modal && modal.type === 'edit' ? 'Save Changes' : 'Add Product'}</button></div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal open={modal && modal.type === 'delete'} onClose={close}>
+        <div className="modal-head"><h3>Delete Product</h3><button className="btn-modal ghost" onClick={close} style={{padding:'6px 10px'}}>✕</button></div>
+        <div className="modal-body"><p style={{color:'var(--text-secondary)',lineHeight:1.7}}>Are you sure you want to delete <strong style={{color:'#fff'}}>"{modal ? modal.product.name : ''}"</strong>? This action cannot be undone.</p></div>
+        <div className="modal-foot"><button className="btn-modal ghost" onClick={close}>Cancel</button><button className="btn-modal danger" onClick={del}>Delete</button></div>
+      </Modal>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   APP — Route definitions
+   ═══════════════════════════════════════════════════ */
+export default function App() {
+  const [products, setProducts] = useState(INIT_PRODUCTS);
+  const [orders] = useState(INIT_ORDERS);
+
+  const storePage = (
+    <>
+      <Ticker />
+      <StoreHeader />
+      <Storefront products={products} />
+      <StoreFooter />
+    </>
+  );
+
+  return (
+    <ToastProvider>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={storePage} />
+        <Route path="/digital-products" element={storePage} />
+        <Route path="/storeadmin" element={<><AdminHeader /><Admin products={products} orders={orders} setProducts={setProducts} /></>} />
+        <Route path="*" element={storePage} />
+      </Routes>
+    </ToastProvider>
+  );
+}
